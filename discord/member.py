@@ -261,6 +261,7 @@ class Member(discord.abc.Messageable, _UserTag):
         'guild',
         'pending',
         'nick',
+        'communication_disabled_until', 
         '_client_status',
         '_user',
         '_state',
@@ -296,6 +297,7 @@ class Member(discord.abc.Messageable, _UserTag):
         self.nick: Optional[str] = data.get('nick', None)
         self.pending: bool = data.get('pending', False)
         self._avatar: Optional[str] = data.get('avatar')
+        self.communication_disabled_until = utils.parse_time(data.get('communication_disabled_until'))
 
     def __str__(self) -> str:
         return str(self._user)
@@ -644,6 +646,7 @@ class Member(discord.abc.Messageable, _UserTag):
         roles: List[discord.abc.Snowflake] = MISSING,
         voice_channel: Optional[VocalGuildChannel] = MISSING,
         reason: Optional[str] = None,
+        timed_out_until: Optional[datetime.datetime] = MISSING,
     ) -> Optional[Member]:
         """|coro|
 
@@ -718,6 +721,12 @@ class Member(discord.abc.Messageable, _UserTag):
                 await http.change_my_nickname(guild_id, nick, reason=reason)
             else:
                 payload['nick'] = nick
+
+        if timed_out_until is not MISSING:
+            if timed_out_until is None:
+                payload["communication_disabled_until"] = None
+            else:
+                payload["communication_disabled_until"] = timed_out_until.isoformat()
 
         if deafen is not MISSING:
             payload['deaf'] = deafen
